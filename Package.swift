@@ -15,6 +15,6 @@ let package = Package(
             dependencies: ["FcaKit"]),
         .testTarget(
             name: "grecon2_experimentsTests",
-            dependencies: ["grecon2_experiments"]),
+            dependencies: ["grecon2_experiments", "FcaKit"]),
     ]
 )
