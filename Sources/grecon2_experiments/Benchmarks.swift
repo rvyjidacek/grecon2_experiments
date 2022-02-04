@@ -10,19 +10,12 @@ import FcaKit
 
 public func compareGreConAndGreConDCoverage() throws {
     
-    for url in try FileManager.getUrls() {
+    for url in try FileManager.default.getUrls() {
         let context = try FormalContext(url: url)
-        let dispatchGroup = DispatchGroup()
-        var factors1: [FormalConcept] = []
-        var factors2: [FormalConcept] = []
+        let factors1: [FormalConcept] = try loadFactorisation(algorithm: .greCon, dataset: url.lastPathComponent)
+        let factors2: [FormalConcept] = try loadFactorisation(algorithm: .greConD, dataset: url.lastPathComponent)
         let alg1 = GreCon()
         let alg2 = GreConD()
-        
-        factors1 = alg1.countFactors(in: context)
-        dispatchGroup.leave()
-        
-        factors2 = alg2.countFactors(in: context)
-        dispatchGroup.leave()
         
         let iterationCount = min(factors1.count, factors2.count)
         let tuples: [(alg: BMFAlgorithm, factors: [FormalConcept])] = [(alg: alg1, factors: factors1), (alg: alg2, factors: factors2)]
@@ -31,11 +24,13 @@ public func compareGreConAndGreConDCoverage() throws {
         
         for tuple in tuples {
             let uncovered = CartesianProduct(context: context)
+            var totalCover = 0
             
-            fileContent += "\(tuple.alg.name)"
+            fileContent += "\(tuple.alg.name);0"
             for i in 0..<iterationCount {
                 let cover = tuple.factors[i].cartesianProduct.intersected(uncovered)
-                fileContent += ",\(cover.count)"
+                totalCover += cover.count
+                fileContent += ";\(totalCover)"
                 
                 for t in cover {
                     uncovered.remove(t)
@@ -45,8 +40,8 @@ public func compareGreConAndGreConDCoverage() throws {
         }
         let dataset = url.lastPathComponent.replacingOccurrences(of: ".fimi", with: "")
         
-        try FileManager.default.saveResult(folder: "Grecon_GreConD_coverage_cmp",
-                                           filename: dataset + ".csv",
+        try FileManager.default.saveResult(folder: [.greconGreConDCoverageCmp],
+                                           filename: dataset,
                                            content: fileContent)
     }
 }
@@ -55,7 +50,7 @@ public func timeBenchmark() throws {
     var fileContent = "\\begin{tabular}{|l|c|c|c|}\n\\hline\n"
     fileContent += "Dataset & GreCon & GreCon2 & GreConD \\\\ \n \\hline\n"
     
-    for url in try FileManager.getUrls() {
+    for url in try FileManager.default.getUrls() {
         if url.isFileURL {
             let context = try FormalContext(url: url, format: .fimi)
             var times: [[Double]] = [[], [], []]
@@ -84,34 +79,49 @@ public func timeBenchmark() throws {
     }
     
     fileContent += "\\end{tabular}\n"
-    try FileManager.default.saveResult(folder: "Time", filename: "times.tex", content: fileContent)
+    try FileManager.default.saveResult(folder: [.time],
+                                       filename: "times",
+                                       content: fileContent)
 }
 
 public func computeAndStoreFactorisation() throws {
     
-    for url in try FileManager.getUrls() {
+    for url in try FileManager.default.getUrls() {
         let context = try FormalContext(url: url, format: .fimi)
         let filename = url.lastPathComponent.replacingOccurrences(of: ".fimi", with: "")
         
         let greCon2Factors = GreCon2().countFactors(in: context)
         
-        try FileManager.default.saveData(folder: "Factorisation/GreCon",
+        try FileManager.default.saveData(folder: [.factorisation, .greCon],
                                          filename: filename,
                                          content: greCon2Factors.map { $0.export() }.joined(separator: "\n"))
         
         let greConDFactors = GreConD().countFactors(in: context)
         
-        try FileManager.default.saveData(folder: "Factorisation/GreConD",
+        try FileManager.default.saveData(folder: [.factorisation, .greConD],
                                          filename: filename,
                                          content: greConDFactors.map { $0.export() }.joined(separator: "\n"))
     }
 }
 
-enum Algorithm {
-    case grecon
-    case grecond
+public enum Algorithm {
+    case greCon
+    case greCon2
+    case greConD
+    
+    var folder: FileManager.FilePath {
+        switch self {
+        case .greCon:  return .greCon
+        case .greCon2: return .greCon2
+        case .greConD: return .greConD
+        }
+    }
 }
 
-public func loadFactorisation(algorithm: Algorithm, dataset: String) {
-    let path = 
+public func loadFactorisation<T: Bicluster>(algorithm: Algorithm, dataset: String) throws -> [T] {
+    if let content = FileManager.default.fileContent(path: [.data, .factorisation, algorithm.folder],
+                                                     fileName: dataset.replacingOccurrences(of: ".fimi", with: "")) {
+        return content.components(separatedBy: .newlines).compactMap { .init(coding: $0) }
+    }
+    return []
 }

@@ -9,6 +9,19 @@ import Foundation
 
 extension FileManager {
     
+    public enum FilePath: String {
+        case datasets = "datasets"
+        case data = "data"
+        case results = "results"
+        case greCon = "grecon"
+        case greCon2 = "greCon2"
+        case greConD = "greConD"
+        case factorisation = "factorisation"
+        case greconGreConDCoverageCmp = "grecon_greConD_coverage_cmp"
+        case time = "time"
+        
+    }
+    
     public func folderExists(at path: String) -> Bool {
         var isDirectory: ObjCBool = false
         let exists = FileManager.default.fileExists(atPath: path, isDirectory:&isDirectory)
@@ -21,12 +34,30 @@ extension FileManager {
         return exists && !(isDirectory.boolValue)
     }
     
-    public func createFileIfNotExists(at path: String, content: String) throws {
-        if !(fileExists(at: path)) {
-            createFile(atPath: path, contents: content.data(using: .utf8), attributes: nil)
+    public func fileExists(at path: [FilePath], fileName: String) -> Bool {
+        return fileExists(at: combinePath(components: path, filename: fileName))
+    }
+    
+    public func createFileIfNotExists(at path: [FilePath], fileName: String, content: String) throws {
+        if !(fileExists(at: path, fileName: fileName)){
+            
+            createFile(atPath: combinePath(components: path, filename: fileName),
+                       contents: content.data(using: .utf8),
+                       attributes: nil)
         } else {
-            try content.write(to: URL(fileURLWithPath: path), atomically: false, encoding: .utf8)
+            try content.write(to: url(from: path, fileName: fileName),
+                              atomically: false,
+                              encoding: .utf8)
         }
+    }
+    
+    public func url(from path: [FilePath], fileName: String) -> URL {
+        URL(fileURLWithPath: combinePath(components: path, filename: fileName))
+    }
+    
+    public func fileContent(path: [FilePath], fileName: String) -> String? {
+        return try! String(contentsOfFile: combinePath(components: path, filename: fileName),
+                           encoding: .utf8)
     }
     
     public func createDirectoryIfNotExists(at path: String) throws {
@@ -35,27 +66,50 @@ extension FileManager {
         }
     }
     
-    public static func getUrls() throws -> [URL] {
-        let path = FileManager.default.currentDirectoryPath + "/datasets"
+    public func getUrls() throws -> [URL] {
+        let path = combinePath(components: [.datasets])
         
-        let urls = try FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: path, isDirectory: true),
-                                                               includingPropertiesForKeys: nil,
-                                                               options: [.skipsHiddenFiles]).filter { $0.absoluteString.contains(".fimi") }
+        let urls = try contentsOfDirectory(at: URL(fileURLWithPath: path, isDirectory: true),
+                                                   includingPropertiesForKeys: nil,
+                                                   options: [.skipsHiddenFiles]).filter { $0.absoluteString.contains(".fimi") }
+        return urls
+    }
+    
+    public func getUrls(path: [FilePath]) throws -> [URL] {
+        let path = combinePath(components: path)
+        
+        let urls = try contentsOfDirectory(at: URL(fileURLWithPath: path, isDirectory: true),
+                                                   includingPropertiesForKeys: nil,
+                                                   options: [.skipsHiddenFiles]).filter { $0.absoluteString.contains(".fimi") }
         return urls
     }
 
-    public func saveResult(folder: String, filename: String, content: String) throws {
-        let folder = currentDirectoryPath + "/results/" + folder
+    public func saveResult(folder: [FilePath], filename: String, content: String) throws {
+        var results: [FilePath] = [.results]
+        results.append(contentsOf: folder)
+        
+        let folder = combinePath(components: results)
         
         try createDirectoryIfNotExists(at: folder)
-        try createFileIfNotExists(at:  folder + "/" + filename, content: content)
+        try createFileIfNotExists(at: results, fileName: filename, content: content)
+        
     }
     
-    public func saveData(folder: String, filename: String, content: String) throws {
-        let folder = currentDirectoryPath + "/data/" + folder
+    public func saveData(folder: [FilePath], filename: String, content: String) throws {
+        var data: [FilePath] = [.data]
+        data.append(contentsOf: folder)
+        
+        let folder = combinePath(components: data)
         
         try createDirectoryIfNotExists(at: folder)
-        try createFileIfNotExists(at:  folder + "/" + filename, content: content)
+        try createFileIfNotExists(at: data, fileName: filename, content: content)
     }
     
+    private func combinePath(components: [FilePath], filename: String) -> String {
+        return currentDirectoryPath + "/" + components.map { $0.rawValue }.joined(separator: "/") + "/" + filename
+    }
+    
+    private func combinePath(components: [FilePath]) -> String {
+        return currentDirectoryPath + "/" + components.map { $0.rawValue }.joined(separator: "/")
+    }
 }

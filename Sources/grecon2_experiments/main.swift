@@ -6,8 +6,8 @@ import Foundation
 #endif
 
 do {
-    try computeAndStoreFactorisation()
-    try timeBenchmark()
+    //try computeAndStoreFactorisation()
+    //try timeBenchmark()
     
     try compareGreConAndGreConDCoverage()
 } catch {
