@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ## COVERAGE GRAPH
 
 import matplotlib.pyplot as plt
