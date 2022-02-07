@@ -212,10 +212,10 @@ public enum Algorithm {
     }
 }
 
-public func loadFactorisation<T: Bicluster>(algorithm: Algorithm, dataset: String) throws -> [T] {
+public func loadFactorisation(algorithm: Algorithm, dataset: String) throws -> [FormalConcept] {
     if let content = FileManager.default.fileContent(path: [.data, .factorisation, algorithm.folder],
                                                      fileName: dataset.replacingOccurrences(of: ".fimi", with: "")) {
-        return content.components(separatedBy: .newlines).map { .init(coding: $0)! }
+        return content.components(separatedBy: .newlines).compactMap { FormalConcept(coding: $0) }
     }
     return []
 }
