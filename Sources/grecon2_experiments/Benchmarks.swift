@@ -215,7 +215,9 @@ public enum Algorithm {
 public func loadFactorisation<T: Bicluster>(algorithm: Algorithm, dataset: String) throws -> [T] {
     if let content = FileManager.default.fileContent(path: [.data, .factorisation, algorithm.folder],
                                                      fileName: dataset.replacingOccurrences(of: ".fimi", with: "")) {
-        return content.components(separatedBy: .newlines).compactMap { .init(coding: $0) }
+        let concepts: [T?] = content.components(separatedBy: .newlines).map { .init(coding: $0) }
+        let notNilConcepts: [T] = concepts.filter { $0 != nil }.map { $0! }
+        return notNilConcepts
     }
     return []
 }
