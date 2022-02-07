@@ -14,3 +14,11 @@ extension Double {
     }
 }
 
+extension URL {
+    
+    public var fileName: String? {
+        lastPathComponent.split(separator: ".").first?.description
+    }
+    
+}
+

@@ -7,9 +7,10 @@ import Foundation
 
 do {
     //try computeAndStoreFactorisation()
-    //try timeBenchmark()
-    
-    try compareGreConAndGreConDCoverage()
+    try timeBenchmark()
+    //try coverageCompare()
+    //try greCon2AndGreConDCoverage()
+    //try allAgorithmCoverage()
 } catch {
     fatalError(error.localizedDescription)
 }

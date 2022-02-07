@@ -17,7 +17,9 @@ extension FileManager {
         case greCon2 = "greCon2"
         case greConD = "greConD"
         case factorisation = "factorisation"
-        case greconGreConDCoverageCmp = "grecon_greConD_coverage_cmp"
+        case greconVsGrecondSimilarity = "grecon_vs_grecond_similarity"
+        case allAlgorithmsCoverageGraph = "grecon_greConD_grecon2_coverage_graph"
+        case grecon2GreConDCoverageGraph = "grecon2_greConD_coverage_graph"
         case time = "time"
         
     }
@@ -84,14 +86,20 @@ extension FileManager {
         return urls
     }
 
-    public func saveResult(folder: [FilePath], filename: String, content: String) throws {
+    public enum FileType: String {
+        case csv = ".csv"
+        case fimi = ".fimi"
+        case tex = ".tex"
+    }
+    
+    public func saveResult(folder: [FilePath], filename: String, fileType: FileType, content: String) throws {
         var results: [FilePath] = [.results]
         results.append(contentsOf: folder)
         
         let folder = combinePath(components: results)
         
         try createDirectoryIfNotExists(at: folder)
-        try createFileIfNotExists(at: results, fileName: filename, content: content)
+        try createFileIfNotExists(at: results, fileName: filename + fileType.rawValue, content: content)
         
     }
     
