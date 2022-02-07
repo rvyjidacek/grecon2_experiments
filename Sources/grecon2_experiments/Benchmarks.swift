@@ -115,12 +115,58 @@ private func compareAlgorithms(algorithms: [Algorithm], url: URL) throws -> Stri
     return fileContent
 }
 
+public func printTimeBenchmark() throws {
+    let timer = Timer()
+    
+    for url in try FileManager.default.getUrls() {
+        if url.isFileURL {
+            let context = try FormalContext(url: url, format: .fimi)
+            var times: [[Double]] = [[], [], []]
+            var algIndex = 0
+            let algs = [GreCon(), GreCon2(), GreConD()]
+            
+            print("\\begin{tabular}{|l|c|c|c|}\n\\hline")
+            print("Dataset & GreCon & GreCon2 & GreConD \\\\ \n \\hline")
+            print(url.fileName ?? "NIL", separator: "", terminator: "")
+            
+            for algorithm in algs {
+                if algIndex == 0 && url.fileName == "nfs" {
+                    times[algIndex].append(0)
+                } else {
+                    for _ in 0..<2 {
+                        timer.start()
+                        let _ = algorithm.countFactors(in: context)
+                        let time = timer.stop()
+                        times[algIndex].append(time)
+                    }
+                }
+                algIndex += 1
+            }
+            
+            
+            for col in 0..<times.count {
+                let average = times[col].reduce(0, +) / Double(times[col].count)
+                let deviation = times[col].map({ (average - $0).magnitude }).reduce(0, +) / Double(times[col].count)
+                print(" & $\(String(format: "%.2f", average.rounded(toPlaces: 2))) \\pm \(String(format: "%.2f", deviation.rounded(toPlaces: 2)))$ ", separator: "", terminator: "")
+            }
+            print("\\\\ \\hline")
+        }
+        print("\\end{tabular}")
+    }
+    
+    
+}
+
+
 public func timeBenchmark() throws {
+    let timer = Timer()
+    
     var fileContent = "\\begin{tabular}{|l|c|c|c|}\n\\hline\n"
     fileContent += "Dataset & GreCon & GreCon2 & GreConD \\\\ \n \\hline\n"
     
     for url in try FileManager.default.getUrls() {
         if url.isFileURL {
+            
             let context = try FormalContext(url: url, format: .fimi)
             var times: [[Double]] = [[], [], []]
             var algIndex = 0
@@ -130,8 +176,8 @@ public func timeBenchmark() throws {
                 if algorithm.name == "GreCon" && url.fileName == "nfs.fimi" {
                     times[algIndex].append(0)
                 } else {
-                    for _ in 0..<5 {
-                        let timer = Timer()
+                    for _ in 0..<2 {
+                        timer.start()
                         let _ = algorithm.countFactors(in: context)
                         let time = timer.stop()
                         times[algIndex].append(time)
@@ -159,6 +205,54 @@ public func timeBenchmark() throws {
                                        content: fileContent)
 }
 
+public func computeAndStoreConcepts() throws {
+    for url in try FileManager.default.getUrls() {
+        if let filename = url.fileName {
+            let context = try FormalContext(url: url)
+            let concepts = PFCbO().count(in: context)
+            
+            try FileManager.default.saveData(folder: [.concepts, .greCon2],
+                                             filename: filename,
+                                             content: concepts.map { $0.export() }.joined(separator: "\n"))
+        }
+    }
+}
+
+public func convertConcepts() throws {
+    
+    let attributes = [
+        "americas_large": 3485,
+        "nfs": 4894
+        
+    ]
+    
+    for url in try FileManager.default.getUrls() {
+        if let filename = url.fileName {
+            let context = try FormalContext(url: url)
+            let conceptValues = FileManager.default
+                .fileContent(path: [.data, .concepts], fileName: filename + ".fimi")?
+                .components(separatedBy: "\n")
+                .map { $0.components(separatedBy: " ").compactMap { Int($0) } } ?? []
+        
+            print("File Parsed")
+            
+            let maxAttribute = attributes[filename]!
+            
+            let objects = context.objectSet()
+            let attributes = context.attributeSet()
+            let concept = FormalConcept(objects: objects, attributes: attributes, context: context)
+            
+            for intent in conceptValues {
+                concept.attributes.erase()
+                concept.attributes.addMany(intent)
+                concept.objects.erase()
+                
+                context.down(attributes: concept.attributes, into: concept.objects)
+                print(concept.export())
+            }
+        }
+    }
+}
 
 public func computeAndStoreFactorisation() throws {
     

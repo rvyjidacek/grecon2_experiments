@@ -17,6 +17,7 @@ extension FileManager {
         case greCon2 = "greCon2"
         case greConD = "greConD"
         case factorisation = "factorisation"
+        case concepts = "concepts"
         case greconVsGrecondSimilarity = "grecon_vs_grecond_similarity"
         case allAlgorithmsCoverageGraph = "grecon_greConD_grecon2_coverage_graph"
         case grecon2GreConDCoverageGraph = "grecon2_greConD_coverage_graph"

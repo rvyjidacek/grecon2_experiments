@@ -6,8 +6,9 @@ import Foundation
 #endif
 
 do {
+    try printTimeBenchmark()
     //try computeAndStoreFactorisation()
-    try timeBenchmark()
+    //try timeBenchmark()
     //try coverageCompare()
     //try greCon2AndGreConDCoverage()
     //try allAgorithmCoverage()
