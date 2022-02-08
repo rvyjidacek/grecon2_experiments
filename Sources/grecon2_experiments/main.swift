@@ -5,13 +5,19 @@ import Foundation
     FileManager.default.changeCurrentDirectoryPath("/Users/romanvyjidacek/repositories/kmi/grecon2_experiments/")
 #endif
 
+FileManager.default.changeCurrentDirectoryPath("/Users/romanvyjidacek/repositories/kmi/grecon2_experiments/")
+
 do {
+//    try computeAndStoreConcepts()
+//    try computeAndStoreFactorisation()
+//    try quartilesInputTimes()
+//    try quartilesCoverageGraphs()
+//    try convertConcepts()
     try printTimeBenchmark()
-    //try computeAndStoreFactorisation()
-    //try timeBenchmark()
-    //try coverageCompare()
-    //try greCon2AndGreConDCoverage()
-    //try allAgorithmCoverage()
+//    try timeBenchmark()
+//    try coverageCompare()
+//    try greCon2AndGreConDCoverage()
+//    try allAgorithmCoverage()
 } catch {
     fatalError(error.localizedDescription)
 }

@@ -52,16 +52,13 @@ public func coverageCompare() throws {
             
             fileContent += "\(tuple.alg.name)"
             for i in 0..<iterationCount {
-                if i >= tuple.factors.count {
-                    fileContent += ";0"
-                    continue
-                }
-                
-                let cover = tuple.factors[i].cartesianProduct.intersected(uncovered)
-                fileContent += ";\(cover.count)"
-                
-                for t in cover {
-                    uncovered.remove(t)
+                if i < tuple.factors.count {
+                    let cover = tuple.factors[i].cartesianProduct.intersected(uncovered)
+                    fileContent += ";\(cover.count)"
+                    
+                    for t in cover {
+                        uncovered.remove(t)
+                    }
                 }
             }
             fileContent += "\n"
@@ -96,17 +93,14 @@ private func compareAlgorithms(algorithms: [Algorithm], url: URL) throws -> Stri
         
         fileContent += "\(tuple.alg.name);0"
         for i in 0..<iterationCount {
-            if i >= tuple.factors.count {
-                fileContent += ";-1"
-                continue
-            }
-            
-            let cover = tuple.factors[i].cartesianProduct.intersected(uncovered)
-            totalCover += cover.count
-            fileContent += ";\(totalCover)"
-            
-            for t in cover {
-                uncovered.remove(t)
+            if i < tuple.factors.count {
+                let cover = tuple.factors[i].cartesianProduct.intersected(uncovered)
+                totalCover += cover.count
+                fileContent += ";\(totalCover)"
+                
+                for t in cover {
+                    uncovered.remove(t)
+                }
             }
         }
         fileContent += "\n"
@@ -125,10 +119,6 @@ public func printTimeBenchmark() throws {
             var algIndex = 0
             let algs = [GreCon(), GreCon2(), GreConD()]
             
-            print("\\begin{tabular}{|l|c|c|c|}\n\\hline")
-            print("Dataset & GreCon & GreCon2 & GreConD \\\\ \n \\hline")
-            print(url.fileName ?? "NIL", separator: "", terminator: "")
-            
             for algorithm in algs {
                 if algIndex == 0 && url.fileName == "nfs" {
                     times[algIndex].append(contentsOf: [0, 0])
@@ -141,20 +131,17 @@ public func printTimeBenchmark() throws {
                     }
                 }
                 algIndex += 1
+                
+                print(algorithm.name)
+                
+                for col in 0..<times.count {
+                    let average = times[col].reduce(0, +) / Double(times[col].count)
+                    let deviation = times[col].map({ (average - $0).magnitude }).reduce(0, +) / Double(times[col].count)
+                    print(" & $\(String(format: "%.2f", average.rounded(toPlaces: 2))) \\pm \(String(format: "%.2f", deviation.rounded(toPlaces: 2)))$ ")
+                }
             }
-            
-            
-            for col in 0..<times.count {
-                let average = times[col].reduce(0, +) / Double(times[col].count)
-                let deviation = times[col].map({ (average - $0).magnitude }).reduce(0, +) / Double(times[col].count)
-                print(" & $\(String(format: "%.2f", average.rounded(toPlaces: 2))) \\pm \(String(format: "%.2f", deviation.rounded(toPlaces: 2)))$ ", separator: "", terminator: "")
-            }
-            print("\\\\ \\hline")
         }
-        print("\\end{tabular}")
-    }
-    
-    
+    } 
 }
 
 
@@ -211,7 +198,7 @@ public func computeAndStoreConcepts() throws {
             let context = try FormalContext(url: url)
             let concepts = PFCbO().count(in: context)
             
-            try FileManager.default.saveData(folder: [.concepts, .greCon2],
+            try FileManager.default.saveData(folder: [.concepts],
                                              filename: filename,
                                              content: concepts.map { $0.export() }.joined(separator: "\n"))
         }
@@ -219,12 +206,6 @@ public func computeAndStoreConcepts() throws {
 }
 
 public func convertConcepts() throws {
-    
-    let attributes = [
-        "americas_large": 3485,
-        "nfs": 4894
-        
-    ]
     
     for url in try FileManager.default.getUrls() {
         if let filename = url.fileName {
@@ -234,10 +215,7 @@ public func convertConcepts() throws {
                 .components(separatedBy: "\n")
                 .map { $0.components(separatedBy: " ").compactMap { Int($0) } } ?? []
         
-            print("File Parsed")
-            
-            let maxAttribute = attributes[filename]!
-            
+                        
             let objects = context.objectSet()
             let attributes = context.attributeSet()
             let concept = FormalConcept(objects: objects, attributes: attributes, context: context)
@@ -314,3 +292,157 @@ public func loadFactorisation(algorithm: Algorithm, dataset: String) throws -> [
     return []
 }
 
+
+public func loadConcepts(dataset: String) throws -> [FormalConcept] {
+    if let content = FileManager.default.fileContent(path: [.data, .concepts],
+                                                     fileName: dataset) {
+        return content.components(separatedBy: .newlines).compactMap { FormalConcept(coding: $0) }
+    }
+    return []
+}
+
+// MARK: - Quartiles
+
+public typealias QuartilesPoints = (q1: Double, q2: Double, q3: Double)
+
+public enum Quartile: Int {
+    case q1 = 1
+    case q2 = 2
+    case q3 = 3
+    case q4 = 4
+}
+
+func countQuartiles(concepts: [FormalConcept]) -> (q1: Double, q2: Double, q3: Double) {
+    let a = concepts.map { Double($0.attributes.count * $0.objects.count) }.sorted()//.map({ "\($0)" }).joined(separator: ";")
+    
+    var quartiles: [Double] = [0, 0, 0]
+    let quotients: [Double] = [1/4, 1/2, 3/4]
+    
+    for i in 0..<3 {
+        let upIndex = Int((Double(a.count) * quotients[i]).rounded(.up))
+        let downIndex = upIndex - 1
+        
+        quartiles[i] = (a[upIndex] + a[downIndex]) / 2
+    }
+    return (quartiles[0], quartiles[1], quartiles[2])
+}
+
+func getQuartile(size: Double, quartiles: (q1: Double, q2: Double, q3: Double)) -> Quartile {
+    if size < quartiles.q1 { return  .q1 }
+    if size >= quartiles.q1 && size < quartiles.q2 { return .q2 }
+    if size >= quartiles.q2 && size < quartiles.q3 { return .q3 }
+    return .q4
+}
+
+
+public func quartileGraph() throws {
+    for url in try FileManager.default.getUrls() {
+        if let fileName = url.fileName {
+            let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
+            let quartiles = countQuartiles(concepts: concepts)
+            let factors = try loadFactorisation(algorithm: .greCon2, dataset: fileName)
+            let iteration = (1...factors.count).map { "\($0)" }
+            let quartile = factors.map { getQuartile(size: $0.size, quartiles: quartiles).rawValue.description }
+            
+            var content = iteration.joined(separator: ";") + "\n"
+            content.append(contentsOf: quartile.joined(separator: ";"))
+                
+            try FileManager.default.saveData(folder: [.quartiles],
+                                             filename: fileName,
+                                             content:  content)
+        }
+    }
+}
+
+public func quartilesInputTimes() throws {
+    var content = ""
+    
+    for url in try FileManager.default.getUrls() {
+        if let fileName = url.fileName {
+            let context = try FormalContext(url: url, format: .fimi)
+            let concepts = try loadConcepts(dataset: fileName)
+            let quartiles = countQuartiles(concepts: concepts)
+            
+            let inputs: [Set<Quartile>] = [
+                [.q4],
+                [.q4, .q3],
+                [.q4, .q3, .q2],
+                [.q4, .q3, .q2, .q1]
+            ]
+            
+            
+            content += fileName + " "
+            var outputs: [String] = []
+            
+            for quartileSet in inputs {
+                let inputConcepts = concepts.filter { quartileSet.contains(getQuartile(size: $0.size, quartiles: quartiles)) }
+                let measureResult = measure { () -> [FormalConcept] in
+                    return GreCon2().countFactorization(using: inputConcepts, in: context)
+                }
+                
+                outputs.append(String(format: "$%.2f \\pm %.2f$", measureResult.averageTime, measureResult.deviation, measureResult.closureResult.count))
+            }
+
+            content += outputs.joined(separator: " & ").appending("\\\\ \n")
+        }
+    }
+    
+    try FileManager.default.saveResult(folder: [], filename: "partial_input_times",
+                                       fileType: .tex,
+                                       content: content)
+}
+
+public func quartilesCoverageGraphs() throws {
+    
+    for url in try FileManager.default.getUrls() {
+        var content = ""
+        
+        if let fileName = url.fileName {
+            let context = try! FormalContext(url: url, format: .fimi)
+            let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
+            let quartiles = countQuartiles(concepts: concepts)
+            
+            let inputs: [Set<Quartile>] = [
+                [.q4, .q3, .q2, .q1],
+                [.q4],
+                [.q4, .q3],
+                [.q4, .q3, .q2],
+            ]
+            
+            let inputType = ["GreCon2", "GreCon2 (Q4)", "GreCon2 (Q4 $\\cup$ Q3)", "GreCon2 (Q4 $\\cup$ Q3 $\\cup$ Q2)"]
+            
+            for i in 0..<inputs.count {
+                let inputConcepts = concepts.filter { inputs[i].contains(getQuartile(size: $0.size, quartiles: quartiles)) }
+                let factors: [FormalConcept] = GreCon2().countFactorization(using: inputConcepts, in: context)
+                let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
+                
+                content.append(contentsOf: coverage)
+            }
+            
+            try FileManager.default.saveResult(folder: [.quartileGraph],
+                                               filename: fileName, fileType: .csv,
+                                               content: content)
+        }
+    }
+}
+
+func dataForCoverageGraph(factors: [FormalConcept], context: FormalContext, algorithmName: String) -> String {
+    var result = ""
+    var totalCoverage: [Int] = []
+    let contextRelation = CartesianProduct(context: context)
+    
+    result.append(contentsOf: "\(algorithmName);0;")
+    for factor in factors {
+        let cover = contextRelation.intersected(factor.cartesianProduct).count
+    
+        for tuple in factor.cartesianProduct {
+            contextRelation.remove(tuple)
+        }
+        
+        totalCoverage.append((totalCoverage.last ?? 0) + cover)
+        
+    }
+    result.append(totalCoverage.map { "\($0)" }.joined(separator: ";"))
+    result.append("\n")
+    return result
+}

@@ -16,7 +16,20 @@ class Folder:
     DATASETS = "datasets"
     GRECON_VS_GRECOND_SIMILARITY = "grecon_vs_grecond_similarity"
     ALL_ALGORITHMS_COVERAGE_GRAPH = "grecon_greConD_grecon2_coverage_graph"
-    GRECON2_GRECOND_COVERAGE_GRAPH  = "grecon2_greConD_coverage_graph"    
+    GRECON2_GRECOND_COVERAGE_GRAPH  = "grecon2_greConD_coverage_graph"   
+
+def count_column_names(file):
+    data_file_delimiter = ';'
+    largest_column_count = 0
+
+    with open(file, 'r') as temp_f:
+        lines = temp_f.readlines()
+
+        for l in lines:
+            column_count = len(l.split(data_file_delimiter)) + 1
+            largest_column_count = column_count if largest_column_count < column_count else largest_column_count
+
+    return [i for i in range(0, largest_column_count)]  
 
 current_path = Path('.')
 input_folder = current_path / Folder.RESULTS / Folder.GRECON_VS_GRECOND_SIMILARITY
@@ -24,7 +37,7 @@ output_folder = current_path / Folder.GRAPHS / Folder.GRECON_VS_GRECOND_SIMILARI
 output_folder.mkdir(exist_ok=True)
 
 for dataset_path in input_folder.rglob('*.csv'):
-    df = pd.read_csv(str(dataset_path) , delimiter=";", index_col=0, header=None)
+    df = pd.read_csv(str(dataset_path) , delimiter=";", index_col=0, header=None, names=count_column_names(str(dataset_path)))
 
     x = list(df.loc[Algorithm.GRECON])
     y = list(df.loc[Algorithm.GRECOND])

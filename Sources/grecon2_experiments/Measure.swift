@@ -18,7 +18,7 @@ public typealias MeasureResult<T> = (averageTime: CFAbsoluteTime,
                               deviation: CFAbsoluteTime,
                               closureResult: T)
 
-public func measure<T>(times: UInt = 1, closure: () -> T) -> MeasureResult<T> {
+public func measure<T>(times: UInt = 2, closure: () -> T) -> MeasureResult<T> {
     let timer = Timer()
     var result: T!
     var executionTimes: [CFAbsoluteTime] = []
