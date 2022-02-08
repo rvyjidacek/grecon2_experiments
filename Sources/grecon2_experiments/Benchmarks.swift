@@ -131,7 +131,7 @@ public func printTimeBenchmark() throws {
             
             for algorithm in algs {
                 if algIndex == 0 && url.fileName == "nfs" {
-                    times[algIndex].append(0)
+                    times[algIndex].append(contentsOf: [0, 0])
                 } else {
                     for _ in 0..<2 {
                         timer.start()
