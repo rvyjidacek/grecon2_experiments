@@ -120,7 +120,7 @@ public func printTimeBenchmark() throws {
             let algs = [GreCon(), GreCon2(), GreConD()]
             
             for algorithm in algs {
-                if algIndex == 0 && url.fileName == "nfs" {
+                if algIndex == 0 {
                     times[algIndex].append(contentsOf: [0, 0])
                 } else {
                     for _ in 0..<2 {
