@@ -61,8 +61,13 @@ extension FileManager {
     }
     
     public func fileContent(path: [FilePath], fileName: String) -> String? {
-        return try! String(contentsOfFile: combinePath(components: path, filename: fileName),
-                           encoding: .utf8)
+        do {
+            return try String(contentsOfFile: combinePath(components: path, filename: fileName),
+                              encoding: .utf8)
+        } catch {
+            return nil
+        }
+        
     }
     
     public func createDirectoryIfNotExists(at path: String) throws {

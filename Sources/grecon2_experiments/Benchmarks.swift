@@ -327,6 +327,31 @@ func countQuartiles(concepts: [Double]) -> (q1: Double, q2: Double, q3: Double) 
     return (quartiles[0], quartiles[1], quartiles[2])
 }
 
+func countQuartiles(fileName: String) throws -> (q1: Double, q2: Double, q3: Double) {
+    if let quartiles = loadQuartiles(file: fileName) {
+        return quartiles
+    }
+        
+    var a = try loadConceptSizes(file: fileName)
+    a.sort()
+    
+    var quartiles: [Double] = [0, 0, 0]
+    let quotients: [Double] = [1/4, 1/2, 3/4]
+    
+    for i in 0..<3 {
+        let upIndex = Int((Double(a.count) * quotients[i]).rounded(.up))
+        let downIndex = upIndex - 1
+        
+        quartiles[i] = (a[upIndex] + a[downIndex]) / 2
+    }
+    
+    try FileManager.default.saveData(folder: [.quartiles],
+                                     filename: fileName,
+                                     content: quartiles.map { $0.description }.joined(separator: ";"))
+    
+    return (quartiles[0], quartiles[1], quartiles[2])
+}
+
 func getQuartile(size: Double, quartiles: (q1: Double, q2: Double, q3: Double)) -> Quartile {
     if size < quartiles.q1 { return  .q1 }
     if size >= quartiles.q1 && size < quartiles.q2 { return .q2 }
@@ -338,8 +363,7 @@ func getQuartile(size: Double, quartiles: (q1: Double, q2: Double, q3: Double)) 
 public func quartileGraph() throws {
     for url in try FileManager.default.getUrls() {
         if let fileName = url.fileName {
-            let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
-            let quartiles = countQuartiles(concepts: concepts)
+            let quartiles = try countQuartiles(fileName: fileName)
             let factors = try loadFactorisation(algorithm: .greCon2, dataset: fileName)
             let iteration = (1...factors.count).map { "\($0)" }
             let quartile = factors.map { getQuartile(size: $0.size, quartiles: quartiles).rawValue.description }
@@ -347,9 +371,10 @@ public func quartileGraph() throws {
             var content = iteration.joined(separator: ";") + "\n"
             content.append(contentsOf: quartile.joined(separator: ";"))
                 
-            try FileManager.default.saveData(folder: [.quartiles],
-                                             filename: fileName,
-                                             content:  content)
+            try FileManager.default.saveResult(folder: [.quartiles],
+                                               filename: fileName,
+                                               fileType: .csv,
+                                               content:  content)
         }
     }
 }
@@ -361,7 +386,7 @@ public func quartilesInputTimes() throws {
         if let fileName = url.fileName {
             let context = try FormalContext(url: url, format: .fimi)
             let concepts = try loadConcepts(dataset: fileName)
-            let quartiles = countQuartiles(concepts: concepts)
+            let quartiles = try countQuartiles(fileName: fileName)
             
             let inputs: [Set<Quartile>] = [
                 [.q4],
@@ -396,11 +421,10 @@ public func quartilesCoverageGraphs() throws {
     
     for url in try FileManager.default.getUrls() {
         var content = ""
-        
         if let fileName = url.fileName {
             let context = try! FormalContext(url: url, format: .fimi)
             let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
-            let quartiles = countQuartiles(concepts: concepts)
+            let quartiles = try countQuartiles(fileName: fileName)
             
             let inputs: [Set<Quartile>] = [
                 [.q4, .q3, .q2, .q1],
@@ -420,7 +444,8 @@ public func quartilesCoverageGraphs() throws {
             }
             
             try FileManager.default.saveResult(folder: [.quartileGraph],
-                                               filename: fileName, fileType: .csv,
+                                               filename: fileName,
+                                               fileType: .csv,
                                                content: content)
         }
     }
@@ -447,12 +472,33 @@ func dataForCoverageGraph(factors: [FormalConcept], context: FormalContext, algo
     return result
 }
 
-private func loadConceptSizes(url: URL) throws -> [Double] {
-    
-    let s = StreamReader(url: url)
-    for _ in 1...10 {
-        if let line = s?.nextLine() {
-            print(line)
+private func loadQuartiles(file: String) -> (q1: Double, q2: Double, q3: Double)? {
+    if let content = FileManager.default.fileContent(path: [.data, .quartiles], fileName: file) {
+        let quartiles = content.components(separatedBy: ";").compactMap { Double($0) }
+        if quartiles.count == 3 {
+            return (quartiles[0], quartiles[1], quartiles[2])
         }
     }
+    return nil
+}
+
+private func loadConceptSizes(file: String) throws -> [Double] {
+    let url = FileManager.default.url(from: [.data, .concepts], fileName: file)
+    let s = LineReader(path: url.path)
+    var sizes: [Double] = []
+    var concept: FormalConcept?
+    
+    while let line = s?.nextLine {
+        if concept == nil {
+            concept = FormalConcept(coding: line)
+        } else {
+            concept?.updateValues(coding: line)
+        }
+        
+        if let concept = concept {
+            sizes.append(concept.size)
+        }
+    }
+    
+    return sizes
 }
