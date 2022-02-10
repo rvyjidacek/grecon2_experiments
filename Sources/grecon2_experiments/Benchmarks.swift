@@ -312,8 +312,8 @@ public enum Quartile: Int {
     case q4 = 4
 }
 
-func countQuartiles(concepts: [FormalConcept]) -> (q1: Double, q2: Double, q3: Double) {
-    let a = concepts.map { Double($0.attributes.count * $0.objects.count) }.sorted()//.map({ "\($0)" }).joined(separator: ";")
+func countQuartiles(concepts: [Double]) -> (q1: Double, q2: Double, q3: Double) {
+    let a = concepts.sorted()//.map({ "\($0)" }).joined(separator: ";")
     
     var quartiles: [Double] = [0, 0, 0]
     let quotients: [Double] = [1/4, 1/2, 3/4]
@@ -445,4 +445,14 @@ func dataForCoverageGraph(factors: [FormalConcept], context: FormalContext, algo
     result.append(totalCoverage.map { "\($0)" }.joined(separator: ";"))
     result.append("\n")
     return result
+}
+
+private func loadConceptSizes(url: URL) throws -> [Double] {
+    
+    let s = StreamReader(url: url)
+    for _ in 1...10 {
+        if let line = s?.nextLine() {
+            print(line)
+        }
+    }
 }
