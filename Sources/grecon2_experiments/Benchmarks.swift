@@ -420,17 +420,16 @@ public func quartilesInputTimes() throws {
 public func quartilesCoverageGraphs() throws {
     
     for url in try FileManager.default.getUrls() {
-        var content = ""
         if let fileName = url.fileName {
             let context = try FormalContext(url: url, format: .fimi)
             let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
             let quartiles = try countQuartiles(fileName: fileName)
             
             let inputs: [Set<Quartile>] = [
-                //[.q4, .q3, .q2, .q1],
                 [.q4],
                 [.q4, .q3],
                 [.q4, .q3, .q2],
+                //[.q4, .q3, .q2, .q1],
             ]
             
             let inputType = ["GreCon2", "GreCon2 (Q4)", "GreCon2 (Q4 $\\cup$ Q3)", "GreCon2 (Q4 $\\cup$ Q3 $\\cup$ Q2)"]
@@ -440,13 +439,18 @@ public func quartilesCoverageGraphs() throws {
                 let factors: [FormalConcept] = GreCon2().countFactorization(using: inputConcepts, in: context)
                 let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
                 
-                content.append(contentsOf: coverage)
+                try FileManager.default.appendResult(folder: [.quartileCoverageGraph],
+                                                     filename: fileName,
+                                                     fileType: .csv,
+                                                     content: coverage)
+                //content.append(contentsOf: coverage)
+                
             }
             
-            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
-                                               filename: fileName,
-                                               fileType: .csv,
-                                               content: content)
+//            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
+//                                               filename: fileName,
+//                                               fileType: .csv,
+//                                               content: content)
         }
     }
 }

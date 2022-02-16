@@ -111,6 +111,24 @@ extension FileManager {
         
     }
     
+    public func appendResult(folder: [FilePath], filename: String, fileType: FileType, content: String) throws {
+        var results: [FilePath] = [.results]
+        results.append(contentsOf: folder)
+        
+        let folder = combinePath(components: results)
+        
+        try createDirectoryIfNotExists(at: folder)
+        
+        if fileExists(atPath: results) {
+            try content.appendToFile(at: results)
+        } else {
+            try createFileIfNotExists(at: results, fileName: filename + fileType.rawValue, content: content)
+        }
+        
+        
+        
+    }
+    
     public func saveData(folder: [FilePath], filename: String, content: String) throws {
         var data: [FilePath] = [.data]
         data.append(contentsOf: folder)

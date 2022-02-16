@@ -23,6 +23,31 @@ extension URL {
     
 }
 
+extension String {
+    
+    func appendToFile(at path: String) throws {
+        let data = (self + "\n").data(using: .utf8)
+        try data?.append(fileURL: URL(fileURLWithPath: path))
+    }
+}
+
+
+extension Data {
+    // https://stackoverflow.com/questions/27327067/append-text-or-data-to-text-file-in-swift
+    func append(fileURL: URL) throws {
+        if let fileHandle = FileHandle(forWritingAtPath: fileURL.path) {
+            defer {
+                fileHandle.closeFile()
+            }
+            fileHandle.seekToEndOfFile()
+            fileHandle.write(self)
+        }
+        else {
+            try write(to: fileURL, options: .atomic)
+        }
+    }
+}
+
 extension FormalConcept {
     
     public func updateValues(coding: String) {
