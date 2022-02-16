@@ -119,8 +119,8 @@ extension FileManager {
         
         try createDirectoryIfNotExists(at: folder)
         
-        if fileExists(atPath: results) {
-            try content.appendToFile(at: results)
+        if fileExists(atPath: folder) {
+            try content.appendToFile(at: folder)
         } else {
             try createFileIfNotExists(at: results, fileName: filename + fileType.rawValue, content: content)
         }
