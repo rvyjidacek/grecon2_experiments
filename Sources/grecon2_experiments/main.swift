@@ -9,13 +9,13 @@ FileManager.default.changeCurrentDirectoryPath("/Users/romanvyjidacek/repositori
 
 do {
 
-    try quartileGraph()
+    try quartilesCoverageGraphs()
 //    try computeAndStoreConcepts()
 //    try computeAndStoreFactorisation()
-//    try quartilesInputTimes()
+    try quartilesInputTimes()
 //    try quartilesCoverageGraphs()
 //    try convertConcepts()
-    try printTimeBenchmark()
+//    try printTimeBenchmark()
 //    try timeBenchmark()
 //    try coverageCompare()
 //    try greCon2AndGreConDCoverage()

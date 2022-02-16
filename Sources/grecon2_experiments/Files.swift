@@ -19,7 +19,7 @@ extension FileManager {
         case factorisation = "factorisation"
         case concepts = "concepts"
         case quartiles = "quartiles"
-        case quartileGraph = "quartiles_graph"
+        case quartileCoverageGraph = "quartile_coverage_graph"
         case greconVsGrecondSimilarity = "grecon_vs_grecond_similarity"
         case allAlgorithmsCoverageGraph = "grecon_greConD_grecon2_coverage_graph"
         case grecon2GreConDCoverageGraph = "grecon2_greConD_coverage_graph"

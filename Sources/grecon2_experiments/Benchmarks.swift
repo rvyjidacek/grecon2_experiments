@@ -238,11 +238,11 @@ public func computeAndStoreFactorisation() throws {
         let context = try FormalContext(url: url, format: .fimi)
         
         if let filename = url.fileName {
-//            let greConFactors = GreCon().countFactors(in: context)
-//
-//            try FileManager.default.saveData(folder: [.factorisation, .greCon],
-//                                             filename: filename,
-//                                             content: greConFactors.map { $0.export() }.joined(separator: "\n"))
+            let greConFactors = GreCon().countFactors(in: context)
+
+            try FileManager.default.saveData(folder: [.factorisation, .greCon],
+                                             filename: filename,
+                                             content: greConFactors.map { $0.export() }.joined(separator: "\n"))
             
             let greCon2Factors = GreCon2().countFactors(in: context)
             
@@ -368,8 +368,8 @@ public func quartileGraph() throws {
             let iteration = (1...factors.count).map { "\($0)" }
             let quartile = factors.map { getQuartile(size: $0.size, quartiles: quartiles).rawValue.description }
             
-            var content = iteration.joined(separator: ";") + "\n"
-            content.append(contentsOf: quartile.joined(separator: ";"))
+            var content = "iteration;" + iteration.joined(separator: ";") + "\n"
+            content.append(contentsOf: "quartile;" + quartile.joined(separator: ";"))
                 
             try FileManager.default.saveResult(folder: [.quartiles],
                                                filename: fileName,
@@ -422,7 +422,7 @@ public func quartilesCoverageGraphs() throws {
     for url in try FileManager.default.getUrls() {
         var content = ""
         if let fileName = url.fileName {
-            let context = try! FormalContext(url: url, format: .fimi)
+            let context = try FormalContext(url: url, format: .fimi)
             let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
             let quartiles = try countQuartiles(fileName: fileName)
             
@@ -443,7 +443,7 @@ public func quartilesCoverageGraphs() throws {
                 content.append(contentsOf: coverage)
             }
             
-            try FileManager.default.saveResult(folder: [.quartileGraph],
+            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
                                                filename: fileName,
                                                fileType: .csv,
                                                content: content)
