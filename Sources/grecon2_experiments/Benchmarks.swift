@@ -444,7 +444,7 @@ public func quartilesCoverageGraphs() throws {
                                                      fileType: .csv,
                                                      content: coverage)
                 //content.append(contentsOf: coverage)
-                
+                print(coverage)
             }
             
 //            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
