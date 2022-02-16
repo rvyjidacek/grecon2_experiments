@@ -427,7 +427,7 @@ public func quartilesCoverageGraphs() throws {
             let quartiles = try countQuartiles(fileName: fileName)
             
             let inputs: [Set<Quartile>] = [
-                [.q4, .q3, .q2, .q1],
+                //[.q4, .q3, .q2, .q1],
                 [.q4],
                 [.q4, .q3],
                 [.q4, .q3, .q2],
