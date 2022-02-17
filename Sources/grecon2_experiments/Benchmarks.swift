@@ -293,12 +293,25 @@ public func loadFactorisation(algorithm: Algorithm, dataset: String) throws -> [
 }
 
 
-public func loadConcepts(dataset: String) throws -> [FormalConcept] {
-    if let content = FileManager.default.fileContent(path: [.data, .concepts],
-                                                     fileName: dataset) {
-        return content.components(separatedBy: .newlines).compactMap { FormalConcept(coding: $0) }
+public func loadConcepts(dataset: String, minimalSize: Int = 0) throws -> [FormalConcept] {
+//    if let content = FileManager.default.fileContent(path: [.data, .concepts],
+//                                                     fileName: dataset) {
+//        return content.components(separatedBy: .newlines).compactMap { FormalConcept(coding: $0) }
+//    }
+//    return []
+    let url = FileManager.default.url(from: [.data, .concepts], fileName: dataset)
+    let s = LineReader(path: url.path)
+    var concepts: [FormalConcept] = []
+    
+    while let line = s?.nextLine {
+        if let concept = FormalConcept(coding: line) {
+            if concept.coverageSize >= minimalSize {
+                concepts.append(concept)
+            }
+        }
     }
-    return []
+    
+    return concepts
 }
 
 // MARK: - Quartiles
