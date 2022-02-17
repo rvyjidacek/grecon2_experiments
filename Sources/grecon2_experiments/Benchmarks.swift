@@ -392,7 +392,7 @@ public func quartilesInputTimes() throws {
                 [.q4],
                 [.q4, .q3],
                 [.q4, .q3, .q2],
-                [.q4, .q3, .q2, .q1]
+                //[.q4, .q3, .q2, .q1]
             ]
             
             
@@ -437,14 +437,11 @@ public func quartilesCoverageGraphs() throws {
             for i in 0..<inputs.count {
                 let inputConcepts = concepts.filter { inputs[i].contains(getQuartile(size: $0.size, quartiles: quartiles)) }
                 let factors: [FormalConcept] = GreCon2().countFactorization(using: inputConcepts, in: context)
-                let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
-                
-                try FileManager.default.appendResult(folder: [.quartileCoverageGraph],
-                                                     filename: fileName,
-                                                     fileType: .csv,
-                                                     content: coverage)
+                //let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
+                printDataForCoverageGraph(factors: inputConcepts, context: context, algorithmName: inputType[i])
+               
                 //content.append(contentsOf: coverage)
-                print(coverage)
+                //print(coverage)
             }
             
 //            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
@@ -474,6 +471,25 @@ func dataForCoverageGraph(factors: [FormalConcept], context: FormalContext, algo
     result.append(totalCoverage.map { "\($0)" }.joined(separator: ";"))
     result.append("\n")
     return result
+}
+
+func printDataForCoverageGraph(factors: [FormalConcept], context: FormalContext, algorithmName: String) {
+    var lastCoverage = 0
+    let contextRelation = CartesianProduct(context: context)
+    
+    print("\(algorithmName);0", terminator: "")
+    for factor in factors {
+        let cover = contextRelation.intersected(factor.cartesianProduct).count
+    
+        for tuple in factor.cartesianProduct {
+            contextRelation.remove(tuple)
+        }
+        
+        lastCoverage += cover
+        print(";\(lastCoverage)", terminator: "")
+        
+    }
+    print("")
 }
 
 private func loadQuartiles(file: String) -> (q1: Double, q2: Double, q3: Double)? {
