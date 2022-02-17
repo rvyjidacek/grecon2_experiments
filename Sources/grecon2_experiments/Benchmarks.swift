@@ -438,7 +438,7 @@ public func quartilesCoverageGraphs() throws {
                 let inputConcepts = concepts.filter { inputs[i].contains(getQuartile(size: $0.size, quartiles: quartiles)) }
                 let factors: [FormalConcept] = GreCon2().countFactorization(using: inputConcepts, in: context)
                 //let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
-                printDataForCoverageGraph(factors: inputConcepts, context: context, algorithmName: inputType[i])
+                printDataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
                
                 //content.append(contentsOf: coverage)
                 //print(coverage)
