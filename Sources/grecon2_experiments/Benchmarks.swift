@@ -421,9 +421,13 @@ public func quartilesCoverageGraphs() throws {
     
     for url in try FileManager.default.getUrls() {
         if let fileName = url.fileName {
+            print("Dataset " + fileName)
             let context = try FormalContext(url: url, format: .fimi)
+            print("Context Loaded")
             let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
+            print("Concepts loaded " + concepts.count.description)
             let quartiles = try countQuartiles(fileName: fileName)
+            print("Quartiles loaded: Q1 \(quartiles.q1) Q2 \(quartiles.q2) Q3 \(quartiles.q3)")
             
             let inputs: [Set<Quartile>] = [
                 [.q4],
@@ -435,6 +439,7 @@ public func quartilesCoverageGraphs() throws {
             let inputType = ["GreCon2", "GreCon2 (Q4)", "GreCon2 (Q4 $\\cup$ Q3)", "GreCon2 (Q4 $\\cup$ Q3 $\\cup$ Q2)"]
             
             for i in 0..<inputs.count {
+                print("Counting \(inputs[i])")
                 let inputConcepts = concepts.filter { inputs[i].contains(getQuartile(size: $0.size, quartiles: quartiles)) }
                 print("Input Concepts: \(inputConcepts.count)")
                 let factors: [FormalConcept] = GreCon2().countFactorization(using: inputConcepts, in: context)
