@@ -148,8 +148,7 @@ public func printTimeBenchmark() throws {
 public func timeBenchmark() throws {
     let timer = Timer()
     
-    var fileContent = "\\begin{tabular}{|l|c|c|c|}\n\\hline\n"
-    fileContent += "Dataset & GreCon & GreCon2 & GreConD \\\\ \n \\hline\n"
+    var fileContent = ""
     
     for url in try FileManager.default.getUrls() {
         if url.isFileURL {
@@ -160,17 +159,12 @@ public func timeBenchmark() throws {
             let algs = [GreCon(), GreCon2(), GreConD()]
             
             for algorithm in algs {
-                if algorithm.name == "GreCon" && url.fileName == "nfs.fimi" {
-                    times[algIndex].append(0)
-                } else {
-                    for _ in 0..<2 {
-                        timer.start()
-                        let _ = algorithm.countFactors(in: context)
-                        let time = timer.stop()
-                        times[algIndex].append(time)
-                    }
+                for _ in 0..<2 {
+                    timer.start()
+                    let _ = algorithm.countFactors(in: context)
+                    let time = timer.stop()
+                    times[algIndex].append(time)
                 }
-                
                 algIndex += 1
             }
             
@@ -200,7 +194,7 @@ public func computeAndStoreConcepts() throws {
             
             try FileManager.default.saveData(folder: [.concepts],
                                              filename: filename,
-                                             content: concepts.map { $0.export() }.joined(separator: "\n"))
+                                             content: concepts.map { $0.export() }.joined(separator: "\n") + "\n")
         }
     }
 }
@@ -242,19 +236,19 @@ public func computeAndStoreFactorisation() throws {
 
             try FileManager.default.saveData(folder: [.factorisation, .greCon],
                                              filename: filename,
-                                             content: greConFactors.map { $0.export() }.joined(separator: "\n"))
+                                             content: greConFactors.map { $0.export() }.joined(separator: "\n") + "\n")
             
             let greCon2Factors = GreCon2().countFactors(in: context)
             
             try FileManager.default.saveData(folder: [.factorisation, .greCon2],
                                              filename: filename,
-                                             content: greCon2Factors.map { $0.export() }.joined(separator: "\n"))
+                                             content: greCon2Factors.map { $0.export() }.joined(separator: "\n") + "\n")
             
             let greConDFactors = GreConD().countFactors(in: context)
             
             try FileManager.default.saveData(folder: [.factorisation, .greConD],
                                              filename: filename,
-                                             content: greConDFactors.map { $0.export() }.joined(separator: "\n"))
+                                             content: greConDFactors.map { $0.export() }.joined(separator: "\n") + "\n")
         }
     }
 }
@@ -405,7 +399,6 @@ public func quartilesInputTimes() throws {
                 [.q4],
                 [.q4, .q3],
                 [.q4, .q3, .q2],
-                //[.q4, .q3, .q2, .q1]
             ]
             
             
@@ -434,40 +427,40 @@ public func quartilesCoverageGraphs() throws {
     
     for url in try FileManager.default.getUrls() {
         if let fileName = url.fileName {
-            print("Dataset " + fileName)
+            var content = ""
+            //print("Dataset " + fileName)
             let context = try FormalContext(url: url, format: .fimi)
-            print("Context Loaded")
+            //print("Context Loaded")
             let concepts = try loadConcepts(dataset: fileName).filter { $0.size > 0 }
-            print("Concepts loaded " + concepts.count.description)
+            //print("Concepts loaded " + concepts.count.description)
             let quartiles = try countQuartiles(fileName: fileName)
-            print("Quartiles loaded: Q1 \(quartiles.q1) Q2 \(quartiles.q2) Q3 \(quartiles.q3)")
+            //print("Quartiles loaded: Q1 \(quartiles.q1) Q2 \(quartiles.q2) Q3 \(quartiles.q3)")
             
             let inputs: [Set<Quartile>] = [
                 [.q4],
                 [.q4, .q3],
                 [.q4, .q3, .q2],
-                //[.q4, .q3, .q2, .q1],
             ]
             
-            let inputType = ["GreCon2", "GreCon2 (Q4)", "GreCon2 (Q4 $\\cup$ Q3)", "GreCon2 (Q4 $\\cup$ Q3 $\\cup$ Q2)"]
+            let inputType = ["GreCon2 (Q4)", "GreCon2 (Q4 $\\cup$ Q3)", "GreCon2 (Q4 $\\cup$ Q3 $\\cup$ Q2)"]
             
             for i in 0..<inputs.count {
-                print("Counting \(inputs[i])")
+                //print("Counting \(inputs[i])")
                 let inputConcepts = concepts.filter { inputs[i].contains(getQuartile(size: $0.size, quartiles: quartiles)) }
-                print("Input Concepts: \(inputConcepts.count)")
+                //print("Input Concepts: \(inputConcepts.count)")
                 let factors: [FormalConcept] = GreCon2().countFactorization(using: inputConcepts, in: context)
-                print("Factor Concepts: \(factors.count)")
-                //let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
+                //print("Factor Concepts: \(factors.count)")
+                let coverage = dataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
                 printDataForCoverageGraph(factors: factors, context: context, algorithmName: inputType[i])
                 
-                //content.append(contentsOf: coverage)
+                content.append(contentsOf: coverage)
                 //print(coverage)
             }
             
-//            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
-//                                               filename: fileName,
-//                                               fileType: .csv,
-//                                               content: content)
+            try FileManager.default.saveResult(folder: [.quartileCoverageGraph],
+                                               filename: fileName,
+                                               fileType: .csv,
+                                               content: content)
         }
     }
 }

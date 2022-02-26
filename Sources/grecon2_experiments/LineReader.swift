@@ -26,6 +26,7 @@ class LineReader {
     var nextLine: String? {
         var line:UnsafeMutablePointer<CChar>? = nil
         var linecap: Int = 0
+        
         defer { free(line) }
         if getline(&line, &linecap, file) > 0 {
             let string = String(cString: line!)
