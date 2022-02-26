@@ -9,7 +9,7 @@ let package = Package(
         .macOS(.v10_12),
     ],
     dependencies: [
-        .package(url: "https://github.com/rvyjidacek/FcaKit.git",  from: "1.2.10"),
+        .package(url: "https://github.com/rvyjidacek/FcaKit.git",  from: "1.2.11"),
         //.package(path: "../FcaKit"),
     ],
     targets: [
