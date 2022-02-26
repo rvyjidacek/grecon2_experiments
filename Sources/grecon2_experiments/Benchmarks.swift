@@ -527,6 +527,26 @@ func printDataForCoverageGraph(factors: [FormalConcept], context: FormalContext,
     print("")
 }
 
+public func considerationBenchmark() throws {
+    var content = ""
+    
+    for url in try FileManager.default.getUrls() {
+        if let fileName = url.fileName {
+            content += fileName + " &  factors count "
+            let context = try FormalContext(url: url, format: .fimi)
+            let grecond = GreConD()
+            let factors = grecond.countFactors(in: context)
+            content += factors.count.description + " & considered #concepts " + grecond.counts.values.count.description + "\n"
+        }
+        print(content)
+    }
+    
+    try FileManager.default.saveResult(folder: [],
+                                       filename: "grecond_consideration",
+                                       fileType: .txt,
+                                       content: content)
+}
+
 private func loadQuartiles(file: String) -> (q1: Double, q2: Double, q3: Double)? {
     if let content = FileManager.default.fileContent(path: [.data, .quartiles], fileName: file) {
         let quartiles = content.components(separatedBy: ";").compactMap { Double($0) }
