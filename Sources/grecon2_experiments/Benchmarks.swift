@@ -423,6 +423,28 @@ public func quartilesInputTimes() throws {
                                        content: content)
 }
 
+public func attributeAndObjectConceptsTimeBenchmark() throws {
+    var content = ""
+    
+    for url in try FileManager.default.getUrls() {
+        if let fileName = url.fileName {
+            content += "& " + fileName + " & "
+            let context = try FormalContext(url: url, format: .fimi)
+            let inputConcepts = [FormalConcept](context.attributeConcepts.union(context.objectConcepts))
+            
+            let measureResult = measure { () -> [FormalConcept] in
+                return GreCon2().countFactorization(using: inputConcepts, in: context)
+            }
+            
+            content += String(format: "$%.2f \\pm %.2f$ & %d\n", measureResult.averageTime, measureResult.deviation, measureResult.closureResult.count)
+        }
+    }
+    
+    try FileManager.default.saveResult(folder: [], filename: "object_and_attributes_concepts",
+                                       fileType: .txt,
+                                       content: content)
+}
+
 public func quartilesCoverageGraphs() throws {
     
     for url in try FileManager.default.getUrls() {

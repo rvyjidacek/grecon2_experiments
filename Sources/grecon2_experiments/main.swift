@@ -8,10 +8,12 @@ import Foundation
 FileManager.default.changeCurrentDirectoryPath("/Users/romanvyjidacek/repositories/kmi/grecon2_experiments/")
 
 do {
+    try attributeAndObjectConceptsTimeBenchmark()
+    
 //    try computeAndStoreConcepts()
 //    try computeAndStoreFactorisation()
 //    try quartilesCoverageGraphs()
-    try quartilesInputTimes()
+//    try quartilesInputTimes()
 //    try quartilesCoverageGraphs()
 //    try convertConcepts()
 //    try printTimeBenchmark()

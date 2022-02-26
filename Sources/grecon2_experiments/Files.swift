@@ -98,6 +98,7 @@ extension FileManager {
         case csv = ".csv"
         case fimi = ".fimi"
         case tex = ".tex"
+        case txt = ".txt"
     }
     
     public func saveResult(folder: [FilePath], filename: String, fileType: FileType, content: String) throws {
