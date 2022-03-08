@@ -1,6 +1,7 @@
 from ctypes.wintypes import HENHMETAFILE
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 from pathlib import Path
 
@@ -25,7 +26,6 @@ class Folder:
     QUARTILE_COVERAGE_GRAPH = "quartile_coverage_graph"
     QUARTILES = "quartiles"
 
-
 def count_column_names(file):
     data_file_delimiter = ';'
     largest_column_count = 0
@@ -40,6 +40,8 @@ def count_column_names(file):
     return [i for i in range(0, largest_column_count)]  
 
 def generate_graphs(folder):
+    POINTS_COUNT = 20
+
     current_path = Path('.')
     input_folder = current_path / Folder.RESULTS / folder
     output_folder = current_path / Folder.GRAPHS / folder
@@ -55,24 +57,31 @@ def generate_graphs(folder):
         fig, lines = plt.subplots()
             
         markers = {
-            Header.GRECON  : ">",
-            Header.GRECOND : "x",
-            Header.GRECON2 : "+",
-            Header.GRECON2_Q4 : ".",
-            Header.GRECON2_Q4_Q3 : "1",
-            Header.GRECON2_Q4_Q3_Q2 : "p"
+            Header.GRECON  : ".",
+            Header.GRECOND : ">",
+            Header.GRECON2 : ">",
+            Header.GRECON2_Q4 : "x",
+            Header.GRECON2_Q4_Q3 : "+",
+            Header.GRECON2_Q4_Q3_Q2 : "."
         }
 
         max_value = max(list(df.max()))
 
         for algorithm in algorithms:
-            y = list(map(lambda x: x / max_value, df.loc[algorithm][::20]))
-            x = list(range(0, len(df.loc[algorithm]), 20))
+            all_values = list(map(lambda x: x / max_value, filter(lambda x: x >= 0, df.loc[algorithm])))
+
+            # y = list(map(lambda x: x / max_value, df.loc[algorithm][::20]))
+            step = len(all_values) // POINTS_COUNT
+            point_values = all_values[1::step]
+            y = all_values if len(all_values) <= POINTS_COUNT else point_values
+
+            x = list(range(1, len(all_values), step))
         
             scatters.append(plt.scatter(x, y, marker=markers[algorithm], 
                                         color='black'))
             
-            plt.plot(x, y, marker="", color='black', linewidth=0.5)
+            plt.plot(list(range(0, len(all_values))), all_values, marker="", color='black', linewidth=0.5)
+            #plt.plot(x, y, marker="", color='black', linewidth=0.5)
             
 
         plt.xlabel('Number of Factors')
@@ -85,7 +94,9 @@ def generate_graphs(folder):
 
         dataset_name = dataset_path.name.replace(".csv", ".eps")
         output_path = output_folder / dataset_name
+        plt.tight_layout()
         plt.savefig(str(output_path), format='eps')
+        plt.close()
 
 def generate_similarity_graphs():
     current_path = Path('.')
@@ -111,13 +122,16 @@ def generate_similarity_graphs():
         plt.xlim(axis_min, axis_max)
         plt.xscale("log")
         plt.margins(0)
+        plt.tight_layout()
 
         dataset_name = dataset_path.name.replace(".csv", ".eps")
         output_path = output_folder / dataset_name
 
         x = np.linspace(0, axis_max, 100)
         plt.plot(x, x, linestyle='dashed', color='gray', zorder=0)
+        
         plt.savefig(str(output_path), format='eps')
+        plt.close()
 
 
 def generate_quartile_graphs():
@@ -139,10 +153,11 @@ def generate_quartile_graphs():
         dataset_name = dataset_path.name.replace(".csv", ".eps")
         output_path = output_folder / dataset_name
         plt.savefig(str(output_path), format='eps')
+        plt.close()
 
-# for folder in [Folder.ALL_ALGORITHMS_COVERAGE_GRAPH, Folder.GRECON2_GRECOND_COVERAGE_GRAPH, Folder.QUARTILE_COVERAGE_GRAPH]:
-#     generate_graphs(folder=folder)
+for folder in [Folder.ALL_ALGORITHMS_COVERAGE_GRAPH, Folder.GRECON2_GRECOND_COVERAGE_GRAPH, Folder.QUARTILE_COVERAGE_GRAPH]:
+    generate_graphs(folder=folder)
 
-# generate_similarity_graphs()
+generate_similarity_graphs()
 
 generate_quartile_graphs()

@@ -547,6 +547,26 @@ public func considerationBenchmark() throws {
                                        content: content)
 }
 
+public func datasetStatistics() throws {
+    var content = ""
+    
+    for url in try FileManager.default.getUrls() {
+        if let fileName = url.fileName {
+            content += fileName + " & "
+            let context = try FormalContext(url: url, format: .fimi)
+            let conceptsCount = context.attributeConcepts.union(context.objectConcepts).count
+            
+            content += "\(context.objectCount) & \(context.attributeCount) & \(context.density) & - & \(conceptsCount)\n"
+            print(content)
+        }
+    }
+    try FileManager.default.saveResult(folder: [],
+                                       filename: "dataset_statistics",
+                                       fileType: .txt,
+                                       content: content)
+    
+}
+
 private func loadQuartiles(file: String) -> (q1: Double, q2: Double, q3: Double)? {
     if let content = FileManager.default.fileContent(path: [.data, .quartiles], fileName: file) {
         let quartiles = content.components(separatedBy: ";").compactMap { Double($0) }
